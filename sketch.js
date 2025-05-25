@@ -1,10 +1,10 @@
+// Global Variables
 let gotas = [];
 let tamanhoTexto = 24; // Tamanho do texto "EU TE AMO" caindo
-let corTexto = [255, 105, 180]; // Rosa choque para o texto (RGB)
 
-// Cores base para o coração principal (transição suave entre azul e roxo)
-let corCoracaoBase1 = [0, 100, 255]; // Azul
-let corCoracaoBase2 = [150, 0, 200]; // Roxo
+// Cores base para o coração principal (transição suave entre azul e roxo vívidos)
+let corCoracaoBase1 = [0, 191, 255]; // Deep Sky Blue (Azul vívido)
+let corCoracaoBase2 = [153, 50, 204]; // Dark Orchid (Roxo vívido)
 let corCoracao = []; // Será dinamicamente atualizada em draw()
 
 let coracaoPiscando = false;
@@ -13,29 +13,28 @@ let duracaoPiscar = 200; // ms
 
 // --- Variáveis para a explosão ---
 let particulasExplosao = [];
-let maxParticulasExplosao = 40; // Quantidade de "EU TE AMO" na explosão
+let maxParticulasExplosao = 25; // Quantidade de "EU TE AMO" na explosão para densidade visual
 let velocidadeExplosaoMin = 5;
-let velocidadeExplosaoMax = 20;
-let tempoVidaParticula = 90; // Tempo em frames que a partícula vive (1.5 segundos a 60fps)
+let velocidadeExplosaoMax = 30;
+let tempoVidaParticula = 180; // 3 segundos de duração para as partículas da explosão
 
-// Cores para as partículas da explosão e corações caindo (Azul, Roxo, Rosa)
+// CORES VÍVIDAS PARA AS PARTÍCULAS QUE CAEM (Corações e "EU TE AMO" caindo)
 const coresExplosao = [
-    [220, 50, 150],   // Rosa mais escuro e vibrante
-    [100, 0, 150],    // Roxo mais escuro e vibrante
-    [0, 100, 200]     // Azul mais escuro e vibrante
+    [0, 191, 255],     // Deep Sky Blue (Azul vívido)
+    [153, 50, 204],    // Dark Orchid (Roxo vívido)
+    [255, 20, 147]     // Deep Pink (Rosa vívido)
 ];
 
-// --- Variáveis para a mensagem superior ---
-let mensagemSuperior = "PARABÉNS AOS NOSSOS 5 MESES";
-let corMensagemSuperior = [0, 255, 255]; // Ciano vibrante
-let tamanhoMensagemSuperior = 28; // Tamanho do texto da mensagem
-
+// CORES ESPECÍFICAS PARA OS "EU TE AMO" DA EXPLOSÃO (azul e roxo)
+const coresExplosaoAzulRoxo = [
+    [0, 191, 255],     // Deep Sky Blue (Azul vívido)
+    [153, 50, 204]     // Dark Orchid (Roxo vívido)
+];
 
 // --- Variáveis para os corações caindo ---
 let coracoesCaindo = []; // Array para armazenar os corações que caem
 let numCoracoesCaindo = 80; // Quantidade de corações caindo
 
-// NÚMERO DE COLUNAS DE TEXTO AGORA É DINÂMICO PARA MELHOR RESPONSIVIDADE
 let numColunas; // Será calculado em setup() e windowResized()
 
 // --- NOVAS VARIÁVEIS PARA O EFEITO DE PULSO E BRILHO DO CORAÇÃO ---
@@ -46,62 +45,61 @@ let maxPulseScale = 1.3; // Escala máxima durante o pulso
 let glowAlpha = 0; // Transparência do brilho (0 a 255)
 let glowSize = 0; // Tamanho do brilho
 
+// Versão do script para depuração
+const SCRIPT_VERSION = "2025-05-25_2030_V1.2"; // Versão atualizada
 
 function setup() {
+    console.log(`Script Version: ${SCRIPT_VERSION} - Setup started.`); // Log da versão
     createCanvas(windowWidth, windowHeight);
     background(0);
     frameRate(60);
 
-    // Calcula o número de colunas dinamicamente para TRIPLICAR a densidade
-    numColunas = floor(width / 5);
-    if (numColunas < 150) numColunas = 150;
+    numColunas = floor(width / 6);
+    if (numColunas < 100) numColunas = 100;
 
-
-    // Inicializa as "gotas" de texto
+    gotas = [];
     for (let i = 0; i < numColunas; i++) {
         gotas.push(new Gota(i * (width / numColunas)));
     }
 
-    // Inicializa os corações caindo
+    coracoesCaindo = [];
     for (let i = 0; i < numCoracoesCaindo; i++) {
         coracoesCaindo.push(new HeartGota(random(width)));
     }
+    console.log(`Script Version: ${SCRIPT_VERSION} - Setup finished.`);
 }
 
 function draw() {
-    background(0, 60); // Fundo semi-transparente para o rastro geral.
+    background(0, 15); // Transparência do fundo para rastro
 
-    // ATUALIZA A COR DO CORAÇÃO PRINCIPAL DINAMICAMENTE
     let lerpFactor = (sin(frameCount * 0.03) + 1) / 2;
     let interpolatedColor = lerpColor(color(corCoracaoBase1[0], corCoracaoBase1[1], corCoracaoBase1[2]), color(corCoracaoBase2[0], corCoracaoBase2[1], corCoracaoBase2[2]), lerpFactor);
     corCoracao = [interpolatedColor.levels[0], interpolatedColor.levels[1], interpolatedColor.levels[2]];
 
 
-    // Desenha e atualiza as gotas de chuva ("EU TE AMO")
     for (let gota of gotas) {
         gota.cair();
         gota.mostrar();
     }
 
-    // Desenha e atualiza os corações caindo
-    for (let heartGota of coracoesCaindo) {
+    // --- Atualiza e desenha os corações caindo ---
+    for (let i = coracoesCaindo.length - 1; i >= 0; i--) {
+        let heartGota = coracoesCaindo[i];
+        // Adicionando verificação de tipo para depuração para HeartGota
+        if (typeof heartGota.mostrar !== 'function') {
+            console.error("ERRO: Objeto na array coracoesCaindo não tem a função 'mostrar'.");
+            console.error("Tipo do objeto:", typeof heartGota);
+            console.error("Objeto:", heartGota);
+            // Remove o objeto problemático para evitar que o erro se repita
+            coracoesCaindo.splice(i, 1);
+            continue; // Pula para a próxima iteração
+        }
         heartGota.cair();
         heartGota.mostrar();
     }
 
-    // --- DESENHA A MENSAGEM SUPERIOR ---
-    fill(corMensagemSuperior[0], corMensagemSuperior[1], corMensagemSuperior[2]);
-    noStroke();
-    textSize(tamanhoMensagemSuperior);
-    textAlign(CENTER, TOP);
-    text(mensagemSuperior, width / 2, 20, width * 0.9); // Centro X, Top Y, Largura Máxima (90% da tela)
-    textAlign(LEFT, BASELINE);
-
-
-    // Desenha o coração principal e seus efeitos
     desenharCoracao();
 
-    // Lógica para o coração principal piscar (cor clara temporária)
     if (coracaoPiscando) {
         if (millis() - tempoPiscando > duracaoPiscar) {
             coracaoPiscando = false;
@@ -111,6 +109,15 @@ function draw() {
     // --- Atualiza e desenha as partículas de explosão ---
     for (let i = particulasExplosao.length - 1; i >= 0; i--) {
         let p = particulasExplosao[i];
+        // Adicionando verificação de tipo para depuração para ParticulaExplosao
+        if (typeof p.mostrar !== 'function') {
+            console.error("ERRO: Objeto na array particulasExplosao não tem a função 'mostrar'.");
+            console.error("Tipo do objeto:", typeof p);
+            console.error("Objeto:", p);
+            // Remove o objeto problemático para evitar que o erro se repita
+            particulasExplosao.splice(i, 1);
+            continue; // Pula para a próxima iteração
+        }
         p.mover();
         p.mostrar();
         if (p.estaMorta()) {
@@ -126,18 +133,29 @@ class Gota {
         this.y = random(-height * 20, 0);
         this.velocidade = random(4, 10);
         this.texto = "EU TE AMO";
+        this.cor = random(coresExplosao);
+        this.alpha = 255;
     }
 
     cair() {
         this.y += this.velocidade;
+
+        if (this.y > height - 100) {
+            this.alpha = map(this.y, height - 100, height, 255, 0);
+        } else {
+            this.alpha = 255;
+        }
+
         if (this.y > height) {
             this.y = random(-height * 20, 0);
             this.velocidade = random(4, 10);
+            this.cor = random(coresExplosao);
+            this.alpha = 255;
         }
     }
 
     mostrar() {
-        fill(corTexto[0], corTexto[1], corTexto[2]);
+        fill(this.cor[0], this.cor[1], this.cor[2], this.alpha);
         noStroke();
         textSize(tamanhoTexto);
         text(this.texto, this.x, this.y);
@@ -182,7 +200,7 @@ class HeartGota {
         bezierVertex(
             this.tamanhoBase * 0.8, -this.tamanhoBase * 1.0,
             this.tamanhoBase * 1.0, -this.tamanhoBase * 0.3,
-            0, this.tamanhoBase * 0.7 // CORREÇÃO APLICADA AQUI
+            0, this.tamanhoBase * 0.7
         );
         endShape(CLOSE);
         pop();
@@ -201,14 +219,14 @@ class ParticulaExplosao {
         this.alpha = 255;
         this.tempoVida = tempoVidaParticula;
         this.tamanho = random(tamanhoTexto * 0.5, tamanhoTexto * 1.0);
-        this.cor = [...random(coresExplosao), this.alpha];
+        this.cor = [...random(coresExplosaoAzulRoxo), this.alpha];
     }
 
     mover() {
         this.x += this.velocidadeX;
         this.y += this.velocidadeY;
-        this.velocidadeX *= 0.97;
-        this.velocidadeY *= 0.97;
+        this.velocidadeX *= 0.995;
+        this.velocidadeY *= 0.995;
         this.tempoVida--;
         this.alpha = map(this.tempoVida, 0, tempoVidaParticula, 0, 255);
         this.cor[3] = this.alpha;
@@ -245,34 +263,30 @@ function desenharCoracao() {
 
     // --- Lógica para o pulso aprimorado e brilho ---
     let escalaCoracaoFinal = 1.0; // Escala padrão
-    if (pulseEffectActive) {
+    if (typeof pulseEffectActive !== 'undefined' && pulseEffectActive) {
         let elapsed = millis() - pulseStartTime;
         if (elapsed < pulseDuration) {
             let progress = map(elapsed, 0, pulseDuration, 0, 1);
-            // Efeito de "pop" com overshoot (cresce um pouco mais e volta)
             if (progress < 0.5) {
                 escalaCoracaoFinal = 1.0 + easeOutBack(progress * 2) * (maxPulseScale - 1.0);
             } else {
                 escalaCoracaoFinal = maxPulseScale - easeInBack((progress - 0.5) * 2) * (maxPulseScale - 1.0);
-                escalaCoracaoFinal = max(1.0, escalaCoracaoFinal); // Garante que não vá abaixo de 1.0
+                escalaCoracaoFinal = max(1.0, escalaCoracaoFinal);
             }
 
-            // Calcula o brilho e tamanho do glow
-            glowAlpha = map(progress, 0, 1, 200, 0); // Fades out
-            glowSize = map(progress, 0, 1, 0, tamanhoBase * 2.5); // Expands mais
+            glowAlpha = map(progress, 0, 1, 200, 0);
+            glowSize = map(progress, 0, 1, 0, tamanhoBase * 2.5);
         } else {
-            pulseEffectActive = false; // Desativa o efeito de pulso
-            glowAlpha = 0; // Zera a transparência do brilho
-            glowSize = 0; // Zera o tamanho do brilho
-            escalaCoracaoFinal = 1.0; // Volta à escala padrão
+            pulseEffectActive = false;
+            glowAlpha = 0;
+            glowSize = 0;
+            escalaCoracaoFinal = 1.0;
         }
     }
 
-    // Desenha o brilho (glow) atrás do coração
-    if (glowAlpha > 0) { // Só desenha se tiver visibilidade
+    if (glowAlpha > 0) {
         push();
         noStroke();
-        // Usa a cor atual do coração para o brilho, com a transparência calculada
         fill(corCoracao[0], corCoracao[1], corCoracao[2], glowAlpha);
         ellipse(width / 2, height / 2 + offset, glowSize, glowSize);
         pop();
@@ -280,7 +294,7 @@ function desenharCoracao() {
 
     push();
     translate(width / 2, height / 2 + offset);
-    scale(escalaCoracaoFinal); // Aplica a escala calculada (pulso)
+    scale(escalaCoracaoFinal);
 
     fill(corAtual[0], corAtual[1], corAtual[2]);
     noStroke();
@@ -304,15 +318,12 @@ function desenharCoracao() {
     pop();
 }
 
-// Funções de easing para um pulso mais interessante
-// easeOutBack: começa rápido e desacelera com um pequeno "overshoot"
 function easeOutBack(x) {
     const c1 = 1.70158;
     const c3 = c1 + 1;
     return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 }
 
-// easeInBack: desacelera e depois "puxa para trás" antes de parar
 function easeInBack(x) {
     const c1 = 1.70158;
     const c3 = c1 + 1;
@@ -323,31 +334,27 @@ function mousePressed() {
     coracaoPiscando = true;
     tempoPiscando = millis();
 
-    // Ativa o novo efeito de pulso e brilho
     pulseEffectActive = true;
     pulseStartTime = millis();
-    // O glowAlpha e glowSize serão calculados dinamicamente em desenharCoracao
-    // Não precisamos setar valores iniciais aqui, pois o map já os controla.
 
-    // Dispara a explosão de "EU TE AMO" no centro do coração
+    // Limpa a array antes de adicionar novas partículas para evitar acúmulo de objetos corrompidos
+    particulasExplosao = [];
     for (let i = 0; i < maxParticulasExplosao; i++) {
         particulasExplosao.push(new ParticulaExplosao(width / 2, height / 2));
     }
+    console.log(`Adicionadas ${maxParticulasExplosao} partículas de explosão.`); // Log when particles are added
 }
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
-    // Recalcula numColunas ao redimensionar para TRIPLICAR a densidade
-    numColunas = floor(width / 5);
-    if (numColunas < 150) numColunas = 150;
+    numColunas = floor(width / 6);
+    if (numColunas < 100) numColunas = 100;
 
-    // Reinicializa as gotas com o novo número de colunas
     gotas = [];
     for (let i = 0; i < numColunas; i++) {
         gotas.push(new Gota(i * (width / numColunas)));
     }
     
-    // Reinicializa os corações caindo ao redimensionar
     coracoesCaindo = [];
     for (let i = 0; i < numCoracoesCaindo; i++) {
         coracoesCaindo.push(new HeartGota(random(width)));

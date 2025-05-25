@@ -14,7 +14,7 @@ let duracaoPiscar = 200; // ms
 
 // --- Variáveis para a explosão ---
 let particulasExplosao = [];
-let maxParticulasExplosao = 150; // Quantidade de "TE AMO" na explosão
+let maxParticulasExplosao = 100; // Quantidade de "TE AMO" na explosão
 let velocidadeExplosaoMin = 5;
 let velocidadeExplosaoMax = 20;
 // TEMPO DE VIDA DA PARTÍCULA DA EXPLOSÃO REDUZIDO PARA 2.5 SEGUNDOS
@@ -77,6 +77,7 @@ function draw() {
     }
 
     // Desenha e atualiza os corações caindo
+    // CORREÇÃO AQUI: 'for (let heartGota of coracoesCaindo)' em vez de 'for (let heartGota = coracoesCaindo)'
     for (let heartGota of coracoesCaindo) {
         heartGota.cair();
         heartGota.mostrar();
@@ -117,7 +118,8 @@ class Gota {
     constructor(x) {
         this.x = x;
         this.y = random(-height * 20, 0); // Começa bem mais acima para alta densidade
-        this.velocidade = random(10, 25);
+        // VELOCIDADE DO TEXTO "EU TE AMO" CAINDO AUMENTADA UM POUCO
+        this.velocidade = random(4, 10); // Antes era random(2, 7)
         this.texto = "EU TE AMO"; // Alterado de "TE AMO" para "EU TE AMO"
     }
 
@@ -125,7 +127,7 @@ class Gota {
         this.y += this.velocidade;
         if (this.y > height) {
             this.y = random(-height * 20, 0); // Reseta a posição Y
-            this.velocidade = random(10, 25);
+            this.velocidade = random(4, 10); // Nova velocidade aumentada
         }
     }
 
@@ -142,7 +144,8 @@ class HeartGota {
     constructor(x) {
         this.x = x;
         this.y = random(-height * 10, 0); // Corações podem começar um pouco mais acima ou abaixo do texto
-        this.velocidade = random(7, 18); // Velocidade similar ao texto
+        // VELOCIDADE DOS CORAÇÕES CAINDO CORTADA PELA METADE
+        this.velocidade = random(3.5, 9); // Antes era random(7, 18)
         this.cor = random(coresExplosao); // Cor aleatória entre azul, roxo e rosa
         // TAMANHO DOS CORAÇÕES CAINDO MENOR
         this.tamanhoBase = random(tamanhoTexto * 0.8, tamanhoTexto * 1.5); // Antes era 1.5 a 2.5
@@ -152,7 +155,7 @@ class HeartGota {
         this.y += this.velocidade;
         if (this.y > height) {
             this.y = random(-height * 10, 0); // Reseta a posição Y
-            this.velocidade = random(7, 18);
+            this.velocidade = random(3.5, 9); // Nova velocidade cortada pela metade
             this.cor = random(coresExplosao); // Nova cor ao resetar
         }
     }
